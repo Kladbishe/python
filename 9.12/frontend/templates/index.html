@@ -1,0 +1,33 @@
+{% extends "base.html" %}
+
+{% block title %}Home - News Portal{% endblock %}
+
+{% block content %}
+<div class="hero">
+    <h1>Welcome to News Portal</h1>
+    <p>Stay updated with the latest news across different categories</p>
+</div>
+
+<div class="categories">
+    <div class="category-card">
+        <h2>News</h2>
+        <p>Latest breaking news and current events</p>
+        <a href="{{ url_for('news.index') }}" class="btn">View News</a>
+        <a href="{{ url_for('news.create_article') }}" class="btn btn-secondary">Create Article</a>
+    </div>
+
+    <div class="category-card">
+        <h2>Sport</h2>
+        <p>Sports news, scores, and highlights</p>
+        <a href="{{ url_for('sport.index') }}" class="btn">View Sport</a>
+        <a href="{{ url_for('sport.create_article') }}" class="btn btn-secondary">Create Article</a>
+    </div>
+
+    <div class="category-card">
+        <h2>Economic</h2>
+        <p>Business and financial news</p>
+        <a href="{{ url_for('economic.index') }}" class="btn">View Economic</a>
+        <a href="{{ url_for('economic.create_article') }}" class="btn btn-secondary">Create Article</a>
+    </div>
+</div>
+{% endblock %}

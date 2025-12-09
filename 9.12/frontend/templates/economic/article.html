@@ -1,0 +1,21 @@
+{% extends "base.html" %}
+
+{% block title %}{{ article.title }} - News Portal{% endblock %}
+
+{% block content %}
+<div class="article-detail">
+    <a href="{{ url_for('economic.index') }}" class="back-link">&larr; Back to Economic</a>
+
+    <article>
+        <h1>{{ article.title }}</h1>
+        <div class="article-meta">
+            <span class="author">By {{ article.author }}</span>
+            <span class="date">{{ article.created_at.strftime('%B %d, %Y at %H:%M') }}</span>
+            <span class="category">Category: {{ article.category }}</span>
+        </div>
+        <div class="article-content">
+            {{ article.content }}
+        </div>
+    </article>
+</div>
+{% endblock %}

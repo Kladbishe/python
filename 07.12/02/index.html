@@ -1,0 +1,243 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Students Manager</title>
+  <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+  <style>
+    body {
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      background-color: #f5f5f7;
+      margin: 0;
+      padding: 2rem;
+      color: #222;
+    }
+
+    h1 {
+      margin-bottom: 1rem;
+    }
+
+    .card {
+      background: #fff;
+      border-radius: 8px;
+      padding: 1.5rem;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+      margin-bottom: 1.5rem;
+    }
+
+    .status {
+      margin-bottom: 0.5rem;
+      font-size: 0.9rem;
+      color: #666;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 0.5rem;
+    }
+
+    thead {
+      background-color: #eee;
+    }
+
+    th, td {
+      padding: 0.5rem 0.75rem;
+      border-bottom: 1px solid #ddd;
+      text-align: left;
+      font-size: 0.95rem;
+    }
+
+    tr:nth-child(even) {
+      background-color: #fafafa;
+    }
+
+    .form-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.75rem;
+      margin-bottom: 0.75rem;
+    }
+
+    .form-group {
+      flex: 1 1 160px;
+      display: flex;
+      flex-direction: column;
+      font-size: 0.9rem;
+    }
+
+    .form-group label {
+      margin-bottom: 0.25rem;
+      font-weight: 500;
+    }
+
+    .form-group input {
+      padding: 0.4rem 0.5rem;
+      border-radius: 4px;
+      border: 1px solid #ccc;
+      font-size: 0.9rem;
+    }
+
+    button {
+      padding: 0.5rem 1rem;
+      border-radius: 4px;
+      border: none;
+      background-color: #2563eb;
+      color: white;
+      font-size: 0.9rem;
+      cursor: pointer;
+    }
+
+    button:disabled {
+      opacity: 0.6;
+      cursor: default;
+    }
+
+    .error {
+      color: #b91c1c;
+      font-size: 0.85rem;
+      margin-top: 0.25rem;
+    }
+
+    .success {
+      color: #166534;
+      font-size: 0.85rem;
+      margin-top: 0.25rem;
+    }
+  </style>
+</head>
+
+<body>
+  <h1>Students Manager</h1>
+
+  <!-- Students list -->
+  <div class="card">
+    <div class="status" id="status">Loading students...</div>
+    <table>
+      <thead>
+        <tr>
+          <th>ID</th>
+          <th>Name</th>
+          <th>City</th>
+          <th>Address</th>
+          <th>Pin</th>
+        </tr>
+      </thead>
+      <tbody id="studentsBody">
+        <!-- rows will be injected here -->
+      </tbody>
+    </table>
+  </div>
+
+  <!-- Add new student -->
+  <div class="card">
+    <h2 style="margin-top:0;">Add New Student</h2>
+    <div id="formMessage"></div>
+    <form id="studentForm">
+      <div class="form-row">
+        <div class="form-group">
+          <label for="name">Name</label>
+          <input id="name" name="name" required />
+        </div>
+        <div class="form-group">
+          <label for="city">City</label>
+          <input id="city" name="city" required />
+        </div>
+        <div class="form-group">
+          <label for="addr">Address</label>
+          <input id="addr" name="addr" required />
+        </div>
+        <div class="form-group">
+          <label for="pin">Pin</label>
+          <input id="pin" name="pin" type="number" required />
+        </div>
+      </div>
+      <button type="submit" id="submitBtn">Add Student</button>
+    </form>
+  </div>
+
+  <script>
+    const MYSERVER = 'https://sqlite-basic-flask-1.onrender.com';
+
+    const statusEl = document.getElementById('status');
+    const tbody = document.getElementById('studentsBody');
+    const form = document.getElementById('studentForm');
+    const formMessage = document.getElementById('formMessage');
+    const submitBtn = document.getElementById('submitBtn');
+
+    // Render table rows
+    function renderStudents(students) {
+      tbody.innerHTML = '';
+      if (!students.length) {
+        statusEl.textContent = 'No students found.';
+        return;
+      }
+      statusEl.textContent = `Loaded ${students.length} students.`;
+      students.forEach(s => {
+        const tr = document.createElement('tr');
+        tr.innerHTML = `
+          <td>${s.id ?? ''}</td>
+          <td>${s.name}</td>
+          <td>${s.city}</td>
+          <td>${s.addr}</td>
+          <td>${s.pin}</td>
+        `;
+        tbody.appendChild(tr);
+      });
+    }
+
+    // Load students from backend
+    function loadStudents() {
+      statusEl.textContent = 'Loading students...';
+      axios.get(MYSERVER + '/')
+        .then(response => {
+          const data = response.data;
+          const students = Array.isArray(data) ? data : [data]; // in case it's not an array
+          renderStudents(students);
+        })
+        .catch(err => {
+          console.error(err);
+          statusEl.textContent = 'Error loading students.';
+        });
+    }
+
+    // Handle form submit (POST /new)
+    form.addEventListener('submit', function (e) {
+      e.preventDefault();
+      formMessage.textContent = '';
+      formMessage.className = '';
+      submitBtn.disabled = true;
+
+      const payload = {
+        name: document.getElementById('name').value,
+        city: document.getElementById('city').value,
+        addr: document.getElementById('addr').value,
+        pin: document.getElementById('pin').value
+      };
+
+      axios.post(MYSERVER + '/new', payload, {
+        headers: {
+          'Content-Type': 'application/json'
+        }
+      }).then(res => {
+        formMessage.textContent = 'Student added successfully!';
+        formMessage.className = 'success';
+        form.reset();
+        loadStudents();
+      }).catch(err => {
+        console.error(err);
+        formMessage.textContent = 'Error adding student.';
+        formMessage.className = 'error';
+      }).finally(() => {
+        submitBtn.disabled = false;
+      });
+    });
+
+    // Initial load
+    loadStudents();
+  </script>
+</body>
+
+</html>
