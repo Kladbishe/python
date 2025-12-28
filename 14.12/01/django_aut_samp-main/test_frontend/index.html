@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Image Gallery Client</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        input, button { margin: 5px 0; display: block; }
+        img { max-width: 200px; margin: 10px; }
+    </style>
+    <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+</head>
+<body>
+
+<h2>Register</h2>
+<input type="text" id="regUsername" placeholder="Username">
+<input type="password" id="regPassword" placeholder="Password">
+<button onclick="register()">Register</button>
+
+<h2>Login</h2>
+<input type="text" id="loginUsername" placeholder="Username">
+<input type="password" id="loginPassword" placeholder="Password">
+<button onclick="login()">Login</button>
+
+<h2>Upload Image</h2>
+<input type="file" id="imageFile">
+<input type="text" id="category" placeholder="Category">
+<input type="text" id="desc" placeholder="Description">
+<input type="number" step="0.01" id="price" placeholder="Price">
+<button onclick="uploadImage()">Upload</button>
+
+<h2>Your Images</h2>
+<div id="imageGallery"></div>
+<h1> Test User : itay</h1>
+<h1> Test pwd : 123</h1>
+<script>
+const BASE_URL = "http://127.0.0.1:8000/gal";
+let token = localStorage.getItem("token") || "";
+
+// --- Register ---
+function register() {
+    const username = document.getElementById("regUsername").value;
+    const password = document.getElementById("regPassword").value;
+
+    fetch(`${BASE_URL}/register`, {
+        method: "POST",
+        headers: {"Content-Type": "application/json"},
+        body: JSON.stringify({username, password})
+    })
+    .then(res => res.json())
+    .then(data => alert("Register: " + JSON.stringify(data)))
+    .catch(err => console.error(err));
+}
+
+// --- Login ---
+
+
+// --- Login with Axios ---
+function login() {
+    const username = document.getElementById("loginUsername").value;
+    const password = document.getElementById("loginPassword").value;
+
+    axios.post(`${BASE_URL}/login`, { username, password })
+        .then(response => {
+            token = response.data.access;
+            localStorage.setItem("token", token);
+            alert("Login successful!");
+            getImages();  // Call your function to load images
+        })
+        .catch(error => {
+            console.error(error);
+            alert("Login failed!");
+        });
+}
+
+function uploadImage() {
+    const fileInput = document.getElementById("imageFile");
+    const category = document.getElementById("category").value;
+    const desc = document.getElementById("desc").value;
+    const price = document.getElementById("price").value;
+
+    if (!fileInput.files.length) {
+        alert("Select an image first!");
+        return;
+    }
+
+    const formData = new FormData();
+    formData.append("image", fileInput.files[0]);
+    formData.append("category", category);
+    formData.append("desc", desc);
+    formData.append("price", price);
+    // formData.append("user", user_id);
+
+    axios.post(`${BASE_URL}/api_img`, formData, {
+        headers: {
+            "Authorization": `Bearer ${token}`,  // Token must be here
+            "Content-Type": "multipart/form-data"  // Axios handles this automatically, but explicit is OK
+        }
+    })
+    .then(response => {
+        alert("Image uploaded!");
+        getImages();
+    })
+    .catch(error => {
+        console.error(error.response.data);
+        alert("Upload failed: " + JSON.stringify(error.response.data));
+    });
+}
+
+// --- Get Images ---
+function getImages() {
+    console.log(localStorage.getItem("token"));
+    fetch(`${BASE_URL}/api_img`, {
+        headers: { "Authorization": `Bearer ${token}` }
+    })
+    .then(res => res.json())
+    .then(data => {
+        const gallery = document.getElementById("imageGallery");
+        gallery.innerHTML = "";
+        data.forEach(img => {
+            const imgEl = document.createElement("img");
+            imgEl.src = img.image; // your serializer should include full URL
+            gallery.appendChild(imgEl);
+        });
+    })
+    .catch(err => console.error(err));
+}
+</script>
+
+</body>
+</html>
